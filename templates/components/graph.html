@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load static %}
+{% block heads %}
+<style>
+    #chartdiv {
+        width: 100%;
+        height: 400px;
+
+    }
+</style>
+
+<script src="https://cdn.amcharts.com/lib/4/core.js"></script>
+<script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
+<script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script>
+
+<!-- Chart code -->
+<script>
+    am4core.ready(function () {
+
+        // Themes begin
+        am4core.useTheme(am4themes_animated);
+        // Themes end
+
+        var chart = am4core.create("chartdiv", am4charts.XYChart);
+        chart.paddingRight = 20;
+
+        chart.dateFormatter.inputDateFormat = "yyyy-MM-dd";
+
+        var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+        dateAxis.renderer.grid.template.location = 0;
+
+        var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+        valueAxis.tooltip.disabled = true;
+
+        var series = chart.series.push(new am4charts.CandlestickSeries());
+        series.dataFields.dateX = "date";
+        series.dataFields.valueY = "close";
+        series.dataFields.openValueY = "open";
+        series.dataFields.lowValueY = "low";
+        series.dataFields.highValueY = "high";
+        series.tooltipText = "Open:${openValueY.value}\nLow:${lowValueY.value}\nHigh:${highValueY.value}\nClose:${valueY.value}";
+
+        // important!
+        // candlestick series colors are set in states. 
+        // series.riseFromOpenState.properties.fill = am4core.color("#00ff00");
+        // series.dropFromOpenState.properties.fill = am4core.color("#FF0000");
+        // series.riseFromOpenState.properties.stroke = am4core.color("#00ff00");
+        // series.dropFromOpenState.properties.stroke = am4core.color("#FF0000");
+
+        series.riseFromPreviousState.properties.fillOpacity = 1;
+        series.dropFromPreviousState.properties.fillOpacity = 0;
+
+        chart.cursor = new am4charts.XYCursor();
+
+        // a separate series for scrollbar
+        var lineSeries = chart.series.push(new am4charts.LineSeries());
+        lineSeries.dataFields.dateX = "date";
+        lineSeries.dataFields.valueY = "close";
+        // need to set on default state, as initially series is "show"
+        lineSeries.defaultState.properties.visible = false;
+
+        // hide from legend too (in case there is one)
+        lineSeries.hiddenInLegend = true;
+        lineSeries.fillOpacity = 0.5;
+        lineSeries.strokeOpacity = 0.5;
+
+        var scrollbarX = new am4charts.XYChartScrollbar();
+        scrollbarX.series.push(lineSeries);
+        chart.scrollbarX = scrollbarX;
+
+        chart.data = {{ data | safe }} ;
+
+    }); // end am4core.ready()
+</script>
+
+<link rel="stylesheet" href="{% static 'css/sidebar.css'%}">
+
+<link rel="stylesheet" href="{% static 'css/custom.css'%}">
+
+{% endblock heads %}
+
+
+{% block title %}Trading{% endblock title %}
+
+{% block logoutmodal %}
+{% include 'components/logoutconfirm.html' %}
+{% endblock logoutmodal %}
+
+
+{% block sidebar %}
+{% include 'components/sidebar.html' %}
+{% endblock sidebar %}
+
+
+{% block content %}
+{% include 'components/navbar.html' %}
+<div  class="container-fluid">
+    <div id="chartdiv"></div>
+
+</div>
+
+{% endblock content %}
+
+
+{% block scripts %}
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#sidebarCollapse').on('click', function () {
+            $('#sidebar').toggleClass('active');
+            $(this).toggleClass('active');
+        });
+    });
+</script>
+{% endblock scripts %}
